@@ -13,6 +13,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:launchMode="singleInstance"
             android:theme="@style/Theme.USBSerialMetrics.NoActionBar"
             android:configChanges="orientation|screenSize|keyboardHidden">
             <intent-filter>
