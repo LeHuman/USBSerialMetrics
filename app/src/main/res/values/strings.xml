@@ -12,4 +12,5 @@
     <string name="mik3y">mik3y</string>
     <string name="felhr85">felHR85</string>
     <string name="blinker">Blinker</string>
+    <string name="note">Two implementations of USB serial. One using mik3y\'s and the other using felhr85\'s.\nClick either button to connect and enable using that implement.\nThis is not a monitor, it is only used for metrics</string>
 </resources>
