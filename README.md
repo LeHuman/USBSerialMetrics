@@ -1,5 +1,7 @@
 # USB Serial Metrics
 
+<img src="https://raw.githubusercontent.com/LeHuman/USBSerialMetrics/main/Icon.png" alt="Icon" width="256">
+
 Test app for USB serial metrics on Android
 
 Implementations used
