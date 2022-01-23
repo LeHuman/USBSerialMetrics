@@ -39,6 +39,7 @@ public class Metric {
 
     boolean run = false;
 
+    long elapsedTime = 0;
     long lastUpdate = 0;
     long lastValue = 0;
 
@@ -53,7 +54,7 @@ public class Metric {
         if (run)
             return;
         run = true;
-        lastUpdate = SystemClock.elapsedRealtime();
+        lastUpdate = SystemClock.elapsedRealtimeNanos();
         lastValue = 0;
     }
 
@@ -75,16 +76,16 @@ public class Metric {
         if (!run)
             return;
 
-        long currentTime = SystemClock.elapsedRealtime();
-        long elapsedTime = currentTime - lastUpdate;
+        long currentTime = SystemClock.elapsedRealtimeNanos();
+        elapsedTime = currentTime - lastUpdate;
 
         lastValue = (long) data.length * Byte.SIZE;
         average10.add(lastValue);
         average100.add(lastValue);
         average1000.add(lastValue);
-        averageT10.add(elapsedTime / 1000.0);
-        averageT100.add(elapsedTime / 1000.0);
-        averageT1000.add(elapsedTime / 1000.0);
+        averageT10.add(elapsedTime / 1000000000.0);
+        averageT100.add(elapsedTime / 1000000000.0);
+        averageT1000.add(elapsedTime / 1000000000.0);
         lastUpdate = currentTime;
     }
 
@@ -95,7 +96,7 @@ public class Metric {
             double avg10 = average10.getAverage() / averageT10.getAverage() / 1000;
             double avg100 = average100.getAverage() / averageT100.getAverage() / 1000;
             double avg1000 = average1000.getAverage() / averageT1000.getAverage() / 1000;
-            return String.format(Locale.ENGLISH, "last length : %d\nlast update : %d\naverage10 : %.4f Kbps\naverage100 : %.4f Kbps\naverage1000 : %.4f Kbps", lastValue, lastValue, avg10, avg100, avg1000);
+            return String.format(Locale.ENGLISH, "# bits : %d\nns : %d\navg last 10 : %.4f Kbps\navg last 100 : %.4f Kbps\navg last 1000 : %.4f Kbps", lastValue, elapsedTime, avg10, avg100, avg1000);
         } catch (Exception ignored) {
             return "Error";
         }

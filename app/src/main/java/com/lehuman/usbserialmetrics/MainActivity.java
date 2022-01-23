@@ -12,6 +12,8 @@ import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.felhr.usbserial.UsbSerialDevice;
+import com.felhr.usbserial.UsbSerialInterface;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
@@ -19,7 +21,9 @@ import com.hoho.android.usbserial.util.SerialInputOutputManager;
 import com.lehuman.usbserialmetrics.databinding.ActivityMainBinding;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         binding.MetricText.postDelayed(run, 250);
-
+        binding.logView.setText("");
     }
 
     private static final String ACTION_USB_PERMISSION = "com.lehuman.usbserialmetrics.USB_PERMISSION";
@@ -75,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     void receive(String ID, byte[] msg) {
 //        binding.logView.append(String.format("(%s) %s\n", ID, new String(msg).replace("\n", "\\n").replace("\t", "\\t")));
         visible = !visible;
-        binding.Blinker.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        binding.Blinker.post(() -> binding.Blinker.setVisibility(visible ? View.VISIBLE : View.INVISIBLE));
         metric.newValue(msg);
     }
 
@@ -134,58 +138,43 @@ public class MainActivity extends AppCompatActivity {
 
         log(ID, "Starting felHR85 implement");
 
-//        UsbDevice device = null;
-//        UsbDeviceConnection usbConnection;
-//
-//        String ACTION_NO_USB = "com.felhr.usbservice.NO_USB";
-//
-//        UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
-//        // This snippet will try to open the first encountered usb device connected, excluding usb root hubs
-//        HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
-//        if (!usbDevices.isEmpty()) {
-//
-//            // first, dump the hashmap for diagnostic purposes
-//            for (Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
-//                device = entry.getValue();
-//            }
-//
-//            for (Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
-//                device = entry.getValue();
-//
-//                if (UsbSerialDevice.isSupported(device)) {
-//                    // There is a supported device connected - request permission to access it.
-//        log(ID, "Requesting permissions");
-//                    requestUserPermission(usbManager, device);
-//                    break;
-//                } else {
-//                    usbConnection = null;
-//                    device = null;
-//                }
-//            }
-//            if (device == null) {
-//                // There are no USB devices connected (but usb host were listed). Send an intent to MainActivity.
-//                Intent intent = new Intent(ACTION_NO_USB);
-//                sendBroadcast(intent);
-//            }
-//        } else {
-//            // There is no USB devices connected. Send an intent to MainActivity
-//            Intent intent = new Intent(ACTION_NO_USB);
-//            sendBroadcast(intent);
-//        }
-//
-//        UsbSerialDevice serial = UsbSerialDevice.createUsbSerialDevice(device, usbConnection);
-//
-//        serial.open();
-//        serial.setBaudRate(115200);
-//        serial.setDataBits(UsbSerialInterface.DATA_BITS_8);
-//        serial.setParity(UsbSerialInterface.PARITY_ODD);
-//        serial.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
-//
-//        UsbSerialInterface.UsbReadCallback mCallback = data -> {
-//            receive(ID, data);
-//        };
-//
-//        serial.read(mCallback);
+        UsbDevice device = null;
+        UsbDeviceConnection connection = null;
+
+        UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        HashMap<String, UsbDevice> usbDevices = manager.getDeviceList();
+
+        if (!usbDevices.isEmpty()) {
+            for (Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
+                device = entry.getValue();
+                if (UsbSerialDevice.isSupported(device)) {
+                    connection = manager.openDevice(device);
+                    if(connection == null) {
+                        log(ID, "Requesting permissions");
+                        requestUserPermission(manager, device);
+                        return;
+                    }
+                }
+            }
+        }
+
+        if (device == null || connection == null) {
+            log(ID, "Failed to open");
+            return;
+        }
+
+        UsbSerialDevice serial = UsbSerialDevice.createUsbSerialDevice(device, connection);
+
+        serial.open();
+        serial.setBaudRate(115200);
+        serial.setDataBits(UsbSerialInterface.DATA_BITS_8);
+        serial.setParity(UsbSerialInterface.PARITY_ODD);
+        serial.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
+
+        UsbSerialInterface.UsbReadCallback mCallback = data -> receive(ID, data);
+
+        serial.read(mCallback);
+        log(ID, "Manager started");
     }
 
 }
