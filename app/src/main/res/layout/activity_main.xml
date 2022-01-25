@@ -53,8 +53,10 @@
         android:textColor="@color/blue_900"
         app:layout_constraintBottom_toTopOf="@+id/MetricText"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout2"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/MetricText"
@@ -80,6 +82,20 @@
         app:backgroundTint="@color/teal_200"
         app:fabSize="mini"
         app:layout_constraintBottom_toBottomOf="@+id/logView"
+        app:layout_constraintEnd_toEndOf="@+id/logView" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/ErrBlinker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="-24dp"
+        android:layout_marginBottom="16dp"
+        android:clickable="true"
+        android:contentDescription="@string/blinker"
+        android:visibility="invisible"
+        app:backgroundTint="@color/red_500"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toTopOf="@+id/Blinker"
         app:layout_constraintEnd_toEndOf="@+id/logView" />
 
     <LinearLayout

@@ -46,11 +46,13 @@ public class MainActivity extends AppCompatActivity {
         binding.mik3yBtn.setOnClickListener(view -> {
             metric.reset();
             metric.start();
+            binding.MetricText.setText(metric.toString());
             mik3yImplement();
         });
         binding.felHR85Btn.setOnClickListener(view -> {
             metric.reset();
             metric.start();
+            binding.MetricText.setText(metric.toString());
             felHR85Implement();
         });
 
@@ -104,16 +106,24 @@ public class MainActivity extends AppCompatActivity {
         if (binding.logView.getLineCount() > 500) {
             binding.logView.setText("");
         }
-        binding.logView.append(String.format("[%s] %s\n", ID, msg));
+        binding.logView.append(String.format("\n[%s] %s", ID, msg));
     }
 
     boolean visible = false;
 
     void receive(String ID, byte[] msg) {
-//        binding.logView.append(String.format("(%s) %s\n", ID, new String(msg).replace("\n", "\\n").replace("\t", "\\t")));
         visible = !visible;
-        binding.Blinker.post(() -> binding.Blinker.setVisibility(visible ? View.VISIBLE : View.INVISIBLE));
+        binding.Blinker.post(() -> {
+            binding.Blinker.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+            if (!visible)
+                binding.ErrBlinker.setVisibility(View.INVISIBLE);
+        });
         metric.newValue(msg);
+    }
+
+    void error(String ID, String msg) {
+        log(ID, "ERR: " + msg);
+        binding.ErrBlinker.post(() -> binding.ErrBlinker.setVisibility(View.VISIBLE));
     }
 
     void mik3yImplement() {
@@ -126,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
 
         List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
         if (availableDrivers.isEmpty()) {
-            log(ID, "Driver list empty");
+            error(ID, "Driver list empty");
             return;
         }
 
@@ -144,8 +154,9 @@ public class MainActivity extends AppCompatActivity {
             port.open(connection);
             port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
         } catch (IOException e) {
-            log(ID, "Failed to open");
+            error(ID, "Failed to open");
             e.printStackTrace();
+            return;
         }
 
         SerialInputOutputManager usbIoManager = new SerialInputOutputManager(port, new SerialInputOutputManager.Listener() {
@@ -156,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onRunError(Exception e) {
-                log(ID, "Running error");
+                error(ID, "Running error");
             }
         });
 
@@ -182,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
                 device = entry.getValue();
                 if (UsbSerialDevice.isSupported(device)) {
                     connection = manager.openDevice(device);
-                    if(connection == null) {
+                    if (connection == null) {
                         log(ID, "Requesting permissions");
                         requestUserPermission(manager, device);
                         return;
@@ -192,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (device == null || connection == null) {
-            log(ID, "Failed to open");
+            error(ID, "Failed to open");
             return;
         }
 
